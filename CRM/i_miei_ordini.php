@@ -24,9 +24,9 @@ if ($conn->connect_error) {
     $db_error_message = "Impossibile connettersi al database per caricare lo storico.";
 } else {
     // 1. Prendi tutti gli ordini creati dall'utente loggato
-    $sql_ordini = "SELECT id_ordine, data_richiesta, centro_costo, stato_ordine 
-                   FROM ordini 
-                   WHERE id_utente_richiedente = ? 
+    $sql_ordini = "SELECT id_ordine, data_richiesta, centro_costo, stato_ordine, fattura_file
+                   FROM ordini
+                   WHERE id_utente_richiedente = ?
                    ORDER BY data_richiesta DESC";
     
     $stmt_ordini = $conn->prepare($sql_ordini);
@@ -133,6 +133,7 @@ if ($conn->connect_error) {
         .chat-message.admin .bubble { background-color: #e9f5ff; border-color: #c3ddf2; border-top-left-radius: 0; color: #034a73; }
         .chat-message.user .bubble { background-color: #f0fdf4; border-color: #cde7d8; border-top-right-radius: 0; color: #1b4332; }
         .bubble time { display: block; font-size: 0.75em; color: #6c757d; margin-top: 6px; text-align: right; }
+        .invoice-download { margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -227,6 +228,10 @@ if ($conn->connect_error) {
                                             <?php endif; ?>
                                         <?php endforeach; ?>
                                     </div>
+                                <?php endif; ?>
+
+                                <?php if (!empty($ordine['fattura_file'])): ?>
+                                    <p class="invoice-download">Fattura: <a href="fatture/<?php echo rawurlencode($ordine['fattura_file']); ?>" target="_blank" class="nav-link-button">Download</a></p>
                                 <?php endif; ?>
                             </div>
                         </div>

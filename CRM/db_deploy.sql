@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS `ordini` (
   `nome_richiedente` varchar(150) NOT NULL,
   `centro_costo` varchar(100) NOT NULL,
   `stato_ordine` varchar(50) NOT NULL DEFAULT 'Inviato',
+  `fattura_file` varchar(255) DEFAULT NULL,
   `data_creazione` timestamp NOT NULL DEFAULT current_timestamp(),
   `data_ultima_modifica` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id_ordine`),
