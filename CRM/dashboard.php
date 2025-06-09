@@ -1,14 +1,13 @@
 <?php
 session_start();
+require_once 'logger.php';
 
 // --- Blocco Debug e Configurazione Sessione/Log ---
 ini_set('log_errors', 1);
-ini_set('error_log', 'C:/xampp/php_error.log');
 error_reporting(E_ALL);
-ini_set('display_errors', 0); 
+ini_set('display_errors', 0);
 
-$timestamp = date("Y-m-d H:i:s");
-error_log("--- [{$timestamp}] Accesso a dashboard.php ---");
+logUserAction("Accesso alla dashboard dell'utente '" . ($_SESSION['username'] ?? 'N/A') . "'");
 
 // Blocco di sicurezza flessibile
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
@@ -127,6 +126,10 @@ $user_role_display = htmlspecialchars(isset($_SESSION['ruolo']) ? $_SESSION['ruo
                 <a href="gestioneutenze.php" class="tool-card">
                     <div class="tool-card-header"><div class="tool-card-icon">👤</div><h3 class="tool-card-title">Gestione Utenze</h3></div>
                     <p class="tool-card-description">Crea, visualizza e modifica gli utenti del sistema.</p>
+                </a>
+                <a href="view_logs.php" class="tool-card">
+                    <div class="tool-card-header"><div class="tool-card-icon">📄</div><h3 class="tool-card-title">Log di Sistema</h3></div>
+                    <p class="tool-card-description">Controlla le attività registrate nell'applicazione.</p>
                 </a>
             </div>
         <?php endif; ?>
