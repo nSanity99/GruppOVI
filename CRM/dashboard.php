@@ -19,6 +19,70 @@ $user_role_from_session = $_SESSION['ruolo'] ?? 'user';
 
 $username_display = htmlspecialchars(isset($_SESSION['username']) ? $_SESSION['username'] : 'N/A');
 $user_role_display = htmlspecialchars(isset($_SESSION['ruolo']) ? $_SESSION['ruolo'] : 'N/A');
+
+require_once 'db_config.php';
+$notif_user = false;
+$notif_admin = false;
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+if (!$conn->connect_error) {
+    if ($user_role_from_session === 'user') {
+        $uid = $_SESSION['user_id'];
+        $sql = "SELECT id_segnalazione, stato FROM segnalazioni WHERE id_utente_segnalante = ? AND stato <> 'Conclusa'";
+        $stmt = $conn->prepare($sql);
+        if ($stmt) {
+            $stmt->bind_param('i', $uid);
+            $stmt->execute();
+            $res = $stmt->get_result();
+            $ids = [];
+            while ($row = $res->fetch_assoc()) {
+                $ids[] = $row['id_segnalazione'];
+            }
+            $stmt->close();
+            if (!$notif_user && $ids) {
+                $ph = implode(',', array_fill(0, count($ids), '?'));
+                $types = str_repeat('i', count($ids));
+                $q = "SELECT id_segnalazione, messaggio_admin, risposta_utente FROM segnalazioni_chat WHERE id_segnalazione IN ($ph) ORDER BY id";
+                $st = $conn->prepare($q);
+                $st->bind_param($types, ...$ids);
+                $st->execute();
+                $res2 = $st->get_result();
+                $msgs = [];
+                while ($r = $res2->fetch_assoc()) { $msgs[$r['id_segnalazione']][] = $r; }
+                foreach ($msgs as $list) {
+                    $last = end($list);
+                    if (!empty($last['messaggio_admin']) && empty($last['risposta_utente'])) { $notif_user = true; break; }
+                }
+                $st->close();
+            }
+        }
+    } elseif ($user_role_from_session === 'admin') {
+        $sql = "SELECT id_segnalazione FROM segnalazioni WHERE stato <> 'Conclusa'";
+        $res = $conn->query($sql);
+        $ids = [];
+        if ($res) {
+            while ($row = $res->fetch_assoc()) {
+                $ids[] = $row['id_segnalazione'];
+            }
+        }
+        if (!$notif_admin && $ids) {
+            $ph = implode(',', array_fill(0, count($ids), '?'));
+            $types = str_repeat('i', count($ids));
+            $q = "SELECT id_segnalazione, messaggio_admin, risposta_utente FROM segnalazioni_chat WHERE id_segnalazione IN ($ph) ORDER BY id";
+            $st = $conn->prepare($q);
+            $st->bind_param($types, ...$ids);
+            $st->execute();
+            $res2 = $st->get_result();
+            $msgs = [];
+            while ($r = $res2->fetch_assoc()) { $msgs[$r['id_segnalazione']][] = $r; }
+            foreach ($msgs as $list) {
+                $last = end($list);
+                if (!empty($last['risposta_utente'])) { $notif_admin = true; break; }
+            }
+            $st->close();
+        }
+    }
+    $conn->close();
+}
 ?>
        
 <!DOCTYPE html>
@@ -54,6 +118,7 @@ $user_role_display = htmlspecialchars(isset($_SESSION['ruolo']) ? $_SESSION['ruo
         .tool-card-icon { font-size: 2.2em; color: #B08D57; background-color: rgba(176, 141, 87, 0.1); width: 50px; height: 50px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-right: 15px; }
         .tool-card-title { font-size: 1.35em; color: #2E572E; margin: 0; font-weight: 600; line-height: 1.3; }
         .tool-card-description { font-size: 0.95em; color: #6c757d; line-height: 1.6; flex-grow: 1; margin-bottom: 0; }
+        .notif-dot { width: 8px; height: 8px; background-color: #dc3545; border-radius: 50%; display: inline-block; margin-left: 6px; }
 
         /* ========== NUOVI STILI PER LA DASHBOARD UTENTE ========== */
         .user-dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
@@ -113,7 +178,7 @@ $user_role_display = htmlspecialchars(isset($_SESSION['ruolo']) ? $_SESSION['ruo
                     <p class="tool-card-description">Approva o rifiuta le richieste di acquisto inviate.</p>
                 </a>
                 <a href="gestione_segnalazione.php" class="tool-card">
-                    <div class="tool-card-header"><div class="tool-card-icon">🔔</div><h3 class="tool-card-title">Gestione Segnalazioni</h3></div>
+                    <div class="tool-card-header"><div class="tool-card-icon">🔔</div><h3 class="tool-card-title">Gestione Segnalazioni<?php if ($notif_admin): ?><span class="notif-dot"></span><?php endif; ?></h3></div>
                     <p class="tool-card-description">Visualizza e gestisci le segnalazioni inviate dagli utenti.</p>
                 </a>
                 <a href="evasioneordini.php" class="tool-card">
@@ -127,6 +192,10 @@ $user_role_display = htmlspecialchars(isset($_SESSION['ruolo']) ? $_SESSION['ruo
                 <a href="gestioneutenze.php" class="tool-card">
                     <div class="tool-card-header"><div class="tool-card-icon">👤</div><h3 class="tool-card-title">Gestione Utenze</h3></div>
                     <p class="tool-card-description">Crea, visualizza e modifica gli utenti del sistema.</p>
+                </a>
+                <a href="logs.php" class="tool-card">
+                    <div class="tool-card-header"><div class="tool-card-icon">🗒️</div><h3 class="tool-card-title">Log Azioni</h3></div>
+                    <p class="tool-card-description">Visualizza le azioni degli utenti e filtra per utente o data.</p>
                 </a>
             </div>
         <?php endif; ?>
@@ -166,7 +235,7 @@ $user_role_display = htmlspecialchars(isset($_SESSION['ruolo']) ? $_SESSION['ruo
                         <p class="tool-card-description">Segnala un problema o invia una richiesta di intervento (non di acquisto).</p>
                     </a>
                     <a href="le_mie_segnalazioni.php" class="tool-card">
-                        <div class="tool-card-header"><div class="tool-card-icon">🗒️</div><h3 class="tool-card-title">Le Mie Segnalazioni</h3></div>
+                        <div class="tool-card-header"><div class="tool-card-icon">🗒️</div><h3 class="tool-card-title">Le Mie Segnalazioni<?php if ($notif_user): ?><span class="notif-dot"></span><?php endif; ?></h3></div>
                         <p class="tool-card-description">Rivedi le tue segnalazioni inviate e controlla il loro stato.</p>
                     </a>
                 </div>

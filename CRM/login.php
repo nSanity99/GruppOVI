@@ -11,11 +11,9 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', 'C:/xampp/php_error.log');
 
-$db_host = 'localhost';
-$db_user = 'root';
-$db_pass = '';
-$db_name = 'gruppo_vitolo_db';
-$login_error = '';
+require_once "db_config.php";
+require_once "log_helpers.php";
+$login_error = "";
 
 error_log("--- Inizio tentativo di login (con ruoli) --- [" . date("Y-m-d H:i:s") . "]");
 
@@ -48,6 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
                         $_SESSION['username'] = $db_username;
                         $_SESSION['ruolo'] = $db_ruolo;
                         $_SESSION['user_fullname'] = $db_user_fullname;
+                        log_action($user_id, $db_username, "login", "Login effettuato");
                         header("Location: dashboard.php");
                         exit;
                     } else {

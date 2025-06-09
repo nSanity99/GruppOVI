@@ -2,6 +2,7 @@
 // File: order_actions.php
 session_start();
 require_once 'db_config.php';
+require_once "log_helpers.php";
 
 ob_clean(); 
 header('Content-Type: application/json');
@@ -129,6 +130,7 @@ try {
     $stmt_ordine->close();
 
     $conn->commit();
+    log_action($id_utente_decisione, $_SESSION["username"], "order_$action", "Ordine $order_id dettaglio $detail_id");
     $response = [
         'success' => true,
         'message' => 'Stato aggiornato con successo.',

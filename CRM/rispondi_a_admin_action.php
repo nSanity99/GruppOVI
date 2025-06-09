@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'db_config.php';
+require_once "log_helpers.php";
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true || !isset($_SESSION['user_id'])) {
     header('Location: le_mie_segnalazioni.php?reply=error');
@@ -42,6 +43,7 @@ $success = $stmt->execute();
 $stmt->close();
 
 if ($success) {
+    log_action($_SESSION["user_id"], $_SESSION["username"], "risposta_segnalazione", "Risposta a segnalazione ID " . $row["id_segnalazione"]);
     $upd = $conn->prepare('UPDATE segnalazioni SET data_ultima_modifica = CURRENT_TIMESTAMP WHERE id_segnalazione = ?');
     if ($upd) {
         $upd->bind_param('i', $row['id_segnalazione']);
