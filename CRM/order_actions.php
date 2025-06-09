@@ -1,6 +1,7 @@
 <?php
 // File: order_actions.php
 session_start();
+require_once 'logger.php';
 require_once 'db_config.php';
 
 ob_clean(); 
@@ -43,7 +44,7 @@ $conn = isset($db_port)
 
 if ($conn->connect_error) {
     $response['message'] = 'Errore di connessione al database.';
-    error_log("[order_actions.php] Errore connessione DB: " . $conn->connect_error);
+    logUserAction("Errore connessione DB in order_actions: " . $conn->connect_error);
     ob_end_clean();
     echo json_encode($response);
     exit;
@@ -139,7 +140,7 @@ try {
 } catch (Exception $e) {
     $conn->rollback();
     $response['message'] = $e->getMessage();
-    error_log("[order_actions.php] ERRORE TRANSAZIONE: " . $e->getMessage());
+    logUserAction("Errore transazione in order_actions: " . $e->getMessage());
 } finally {
     if ($conn) $conn->close();
 }

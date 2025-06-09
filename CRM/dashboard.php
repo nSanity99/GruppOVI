@@ -1,14 +1,13 @@
 <?php
 session_start();
+require_once 'logger.php';
 
 // --- Blocco Debug e Configurazione Sessione/Log ---
 ini_set('log_errors', 1);
-ini_set('error_log', 'C:/xampp/php_error.log');
 error_reporting(E_ALL);
-ini_set('display_errors', 0); 
+ini_set('display_errors', 0);
 
-$timestamp = date("Y-m-d H:i:s");
-error_log("--- [{$timestamp}] Accesso a dashboard.php ---");
+logUserAction("Accesso alla dashboard dell'utente '" . ($_SESSION['username'] ?? 'N/A') . "'");
 
 // Blocco di sicurezza flessibile
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
