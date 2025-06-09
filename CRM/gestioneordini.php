@@ -26,6 +26,7 @@ $filtro_data_a = isset($_GET['data_a']) ? $_GET['data_a'] : '';
 // --- Logica Database (invariato) ---
 $conn_go = isset($db_port) ? new mysqli($db_host, $db_user, $db_pass, $db_name, $db_port) : new mysqli($db_host, $db_user, $db_pass, $db_name);
 $ordini_dal_db = [];
+$chat_messaggi = [];
 $db_error_message_go = null;
 $totale_ordini = 0;
 
@@ -90,6 +91,24 @@ if ($conn_go->connect_error) {
             $ordini_dal_db[] = $ordine_row;
         }
         $stmt_ordini->close();
+
+        if (!empty($ordini_dal_db)) {
+            $ids = array_column($ordini_dal_db, 'id_ordine');
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $types_chat = str_repeat('i', count($ids));
+            $sql_chat = "SELECT id, id_ordine, messaggio_admin, risposta_utente, data_messaggio, data_risposta FROM ordini_chat WHERE id_ordine IN ($placeholders) ORDER BY data_messaggio ASC";
+            $stmt_chat = $conn_go->prepare($sql_chat);
+            $stmt_chat->bind_param($types_chat, ...$ids);
+            $stmt_chat->execute();
+            $res_chat = $stmt_chat->get_result();
+            if ($res_chat) {
+                while ($row = $res_chat->fetch_assoc()) {
+                    $chat_messaggi[$row['id_ordine']][] = $row;
+                }
+                $res_chat->free();
+            }
+            $stmt_chat->close();
+        }
     } else {
         $db_error_message_go = "Errore durante la preparazione degli ordini.";
     }
@@ -172,6 +191,16 @@ if ($conn_go->connect_error) {
         .status-prodotto.approvato { color: #28a745; }
         .status-prodotto.rifiutato { color: #dc3545; }
         .status-prodotto.inviato { color: #007bff; }
+
+        /* Stili chat analoghi alle segnalazioni */
+        .chat-messages { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; padding-right: 10px; }
+        .chat-message { display: flex; }
+        .chat-message.admin { justify-content: flex-start; }
+        .chat-message.user { justify-content: flex-end; }
+        .bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 0.95em; line-height: 1.4; border: 1px solid transparent; }
+        .chat-message.admin .bubble { background-color: #e9f5ff; border-color: #c3ddf2; border-top-left-radius: 0; color: #034a73; }
+        .chat-message.user .bubble { background-color: #f0fdf4; border-color: #cde7d8; border-top-right-radius: 0; color: #1b4332; }
+        .bubble time { display: block; font-size: 0.75em; color: #6c757d; margin-top: 6px; text-align: right; }
         
         /* --- Paginazione (invariata) --- */
         .pagination-controls { display: flex; justify-content: center; align-items: center; padding: 20px 0; gap: 5px; flex-wrap: wrap; }
@@ -306,6 +335,37 @@ if ($conn_go->connect_error) {
                                 <?php else: ?>
                                     <p>Nessun prodotto in questo ordine.</p>
                                 <?php endif; ?>
+
+                                <?php if (!empty($chat_messaggi[$ordine['id_ordine']])): ?>
+                                    <div class="chat-messages">
+                                        <?php foreach ($chat_messaggi[$ordine['id_ordine']] as $msg): ?>
+                                            <div class="chat-message admin">
+                                                <div class="bubble">
+                                                    <p><?php echo nl2br(htmlspecialchars($msg['messaggio_admin'])); ?></p>
+                                                    <time><?php echo date('d/m H:i', strtotime($msg['data_messaggio'])); ?></time>
+                                                </div>
+                                            </div>
+                                            <?php if (!empty($msg['risposta_utente'])): ?>
+                                                <div class="chat-message user">
+                                                    <div class="bubble">
+                                                        <p><?php echo nl2br(htmlspecialchars($msg['risposta_utente'])); ?></p>
+                                                        <time><?php echo date('d/m H:i', strtotime($msg['data_risposta'])); ?></time>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+
+                                <form class="management-form">
+                                    <input type="hidden" name="id_ordine" value="<?php echo $ordine['id_ordine']; ?>">
+                                    <div class="form-group">
+                                        <label for="messaggio_admin-<?php echo $ordine['id_ordine']; ?>">Nuovo Messaggio per l'Utente:</label>
+                                        <textarea id="messaggio_admin-<?php echo $ordine['id_ordine']; ?>" name="messaggio_admin"></textarea>
+                                    </div>
+                                    <button type="button" class="nav-link-button update-chat-btn">Invia</button>
+                                    <span class="update-feedback" style="margin-left:10px;color:green;font-weight:bold;"></span>
+                                </form>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -338,7 +398,7 @@ if ($conn_go->connect_error) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const ordersListContainer = document.getElementById('orders-list-container');
+        const ordersListContainer = document.getElementById('orders-list-container');
 
     if (ordersListContainer) {
         ordersListContainer.addEventListener('click', function(event) {
@@ -364,6 +424,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (target.classList.contains('product-action-btn') || target.classList.contains('edit-status-btn')) {
                 event.stopPropagation(); // Evita che il click si propaghi e chiuda/apra l'ordine
                 handleProductAction(target);
+            }
+
+            const chatBtn = target.closest('.update-chat-btn');
+            if (chatBtn) {
+                event.stopPropagation();
+                handleChatSubmit(chatBtn);
             }
         });
     }
@@ -441,6 +507,32 @@ document.addEventListener('DOMContentLoaded', function() {
             orderStatusBadge.textContent = newOrderStatus;
             orderStatusBadge.className = 'status-badge ' + newOrderStatus.toLowerCase().replace(/ /g, '-');
         }
+    }
+
+    function handleChatSubmit(button) {
+        const form = button.closest('.management-form');
+        const id = form.querySelector('input[name="id_ordine"]').value;
+        const msg = form.querySelector('textarea[name="messaggio_admin"]').value;
+        const feedback = form.querySelector('.update-feedback');
+        button.textContent = '...';
+        button.disabled = true;
+        const fd = new FormData();
+        fd.append('id_ordine', id);
+        fd.append('messaggio_admin', msg);
+        fetch('update_order_chat_action.php', {
+            method: 'POST',
+            body: fd
+        }).then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                feedback.textContent = 'Inviato!';
+                setTimeout(() => { feedback.textContent = ''; }, 2000);
+                form.querySelector('textarea[name="messaggio_admin"]').value = '';
+            } else {
+                alert('Errore: ' + data.message);
+            }
+        }).catch(err => { console.error(err); alert('Errore di comunicazione.'); })
+        .finally(() => { button.textContent = 'Invia'; button.disabled = false; });
     }
 });
 </script>
