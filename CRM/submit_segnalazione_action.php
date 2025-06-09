@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'logger.php';
 require_once 'db_config.php';
 
 // Sicurezza e validazione
@@ -30,7 +31,7 @@ if (empty($titolo) || empty($area_competenza) || empty($descrizione)) {
 // Connessione al DB
 $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 if ($conn->connect_error) {
-    error_log("Errore connessione DB in submit_segnalazione_action: " . $conn->connect_error);
+    logUserAction("Errore connessione DB durante invio segnalazione: " . $conn->connect_error);
     $error_msg = urlencode("Errore di connessione al sistema.");
     header("Location: segnalazioni_form.php?status=error&message=$error_msg");
     exit;
@@ -47,13 +48,13 @@ if ($stmt) {
         header("Location: segnalazioni_form.php?status=success");
     } else {
         // Errore
-        error_log("Errore esecuzione statement in submit_segnalazione_action: " . $stmt->error);
+        logUserAction("Errore nell'esecuzione della query per salvare la segnalazione: " . $stmt->error);
         $error_msg = urlencode("Impossibile salvare la segnalazione.");
         header("Location: segnalazioni_form.php?status=error&message=$error_msg");
     }
     $stmt->close();
 } else {
-    error_log("Errore preparazione statement in submit_segnalazione_action: " . $conn->error);
+    logUserAction("Errore preparazione statement per salvare la segnalazione: " . $conn->error);
     $error_msg = urlencode("Errore di sistema interno.");
     header("Location: segnalazioni_form.php?status=error&message=$error_msg");
 }

@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'logger.php';
 
 if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
     header("Location: dashboard.php");
@@ -17,18 +18,18 @@ $db_pass = '';
 $db_name = 'gruppo_vitolo_db';
 $login_error = '';
 
-error_log("--- Inizio tentativo di login (con ruoli) --- [" . date("Y-m-d H:i:s") . "]");
+logUserAction("Tentativo di login avviato");
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
     $username_input = trim($_POST['username']);
     $password_input = $_POST['password'];
 
-    error_log("[Login con ruoli] Input ricevuto - Username: [{$username_input}]");
+    logUserAction("Tentativo di login per utente '{$username_input}'");
 
     $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 
     if ($conn->connect_error) {
-        error_log("[Login con ruoli] Errore di connessione al database: " . $conn->connect_error);
+        logUserAction("Errore di connessione al database durante login utente '{$username_input}': " . $conn->connect_error);
         $login_error = "Errore di sistema. Riprova più tardi.";
     } else {
         $stmt = $conn->prepare("SELECT id, username, password_hash, ruolo, nome FROM utenti WHERE username = ?");
@@ -48,13 +49,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
                         $_SESSION['username'] = $db_username;
                         $_SESSION['ruolo'] = $db_ruolo;
                         $_SESSION['user_fullname'] = $db_user_fullname;
+                        logUserAction("Login riuscito per utente '{$db_username}' con ruolo '{$db_ruolo}'");
                         header("Location: dashboard.php");
                         exit;
                     } else {
                         $login_error = "Nome utente o password non validi.";
+                        logUserAction("Login fallito per utente '{$username_input}': password errata");
                     }
                 } else {
                     $login_error = "Nome utente o password non validi.";
+                    logUserAction("Login fallito per utente '{$username_input}': utente non trovato");
                 }
             }
             $stmt->close();
@@ -64,7 +68,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
         $conn->close();
     }
 }
-error_log("--- Fine tentativo di login (con ruoli) --- [" . date("Y-m-d H:i:s") . "]");
+logUserAction("Fine tentativo di login");
 ?>
 
 <!DOCTYPE html>
