@@ -169,16 +169,12 @@ error_log("--- [{$timestamp}] Accesso a form_page.php UTENTE: " . htmlspecialcha
             <?php endif; ?>
 
             <form id="main-request-form" action="submit_order_action.php" method="POST">
+                <input type="hidden" name="id_utente_richiedente" value="<?php echo htmlspecialchars($_SESSION['user_id']); ?>">
+                <input type="hidden" name="nome_richiedente" value="<?php echo $richiedente_nome; ?>">
                 <div class="form-row">
                     <div class="form-group">
                         <label for="data_richiesta_display">Data Richiesta:</label>
                         <input type="text" id="data_richiesta_display" name="data_richiesta_display" value="<?php echo $current_date; ?>" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="richiedente_display">Richiedente:</label>
-                        <input type="text" id="richiedente_display" name="richiedente_display" value="<?php echo $richiedente_nome; ?>" readonly>
-                        <input type="hidden" name="id_utente_richiedente" value="<?php echo htmlspecialchars($_SESSION['user_id']); ?>">
-                        <input type="hidden" name="nome_richiedente" value="<?php echo $richiedente_nome; ?>">
                     </div>
                 </div>
                 <div class="form-row">

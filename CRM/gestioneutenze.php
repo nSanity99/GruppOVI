@@ -22,6 +22,14 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true ||
 $username_display_gu = htmlspecialchars(isset($_SESSION['username']) ? $_SESSION['username'] : 'N/A');
 $user_role_display_gu = htmlspecialchars(isset($_SESSION['ruolo']) ? $_SESSION['ruolo'] : 'N/A');
 
+// Opzioni di collocazione (usate per il campo Collocazione)
+$collocazioni = [
+    "ABA", "Amm. Riabilitazione", "Amministrazione", "Assistenti Direzione",
+    "Assistenti Sociali", "Call Center", "Cardiologia", "Direttore", "Infermeria",
+    "Logopediste", "Palestra", "Semiconvitto", "TO", "Ufficio Personale", "Ufficio Planning"
+];
+sort($collocazioni);
+
 
 // --- Connessione al Database e logica per la gestione utenti ---
 $db_host = 'localhost'; $db_user = 'root'; $db_pass = ''; $db_name = 'gruppo_vitolo_db';
@@ -225,7 +233,7 @@ if ($action === 'list_feedback' || strpos($action, 'user_') === 0) { // user_cre
                 <table class="users-table">
                     <thead>
                         <tr>
-                            <th>ID</th><th>Username</th><th>Email</th><th>Nome</th><th>Ruolo</th><th>Data Creazione</th><th>Azioni</th>
+                            <th>ID</th><th>Username</th><th>Email</th><th>Nome</th><th>Collocazione</th><th>Ruolo</th><th>Data Creazione</th><th>Azioni</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -236,6 +244,7 @@ if ($action === 'list_feedback' || strpos($action, 'user_') === 0) { // user_cre
                                     <td><?php echo htmlspecialchars($user['username']); ?></td>
                                     <td><?php echo htmlspecialchars(isset($user['email']) ? $user['email'] : '-'); ?></td>
                                     <td><?php echo htmlspecialchars(isset($user['nome']) ? $user['nome'] : '-'); ?></td>
+                                    <td><?php echo htmlspecialchars(isset($user['collocazione']) ? $user['collocazione'] : '-'); ?></td>
                                     <td><?php echo htmlspecialchars($user['ruolo']); ?></td>
                                     <td><?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($user['data_creazione']))); ?></td>
                                     <td class="actions-cell">
@@ -244,7 +253,7 @@ if ($action === 'list_feedback' || strpos($action, 'user_') === 0) { // user_cre
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
-                            <tr><td colspan="7" style="text-align:center; padding: 20px;">Nessun utente trovato nel sistema.</td></tr>
+                            <tr><td colspan="8" style="text-align:center; padding: 20px;">Nessun utente trovato nel sistema.</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -274,6 +283,15 @@ if ($action === 'list_feedback' || strpos($action, 'user_') === 0) { // user_cre
                         <div class="form-group">
                             <label for="nome">Nome Completo:</label>
                             <input type="text" id="nome" name="nome" class="form-control" value="<?php echo htmlspecialchars(isset($user_to_edit['nome']) ? $user_to_edit['nome'] : ''); ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="collocazione">Collocazione:</label>
+                            <select id="collocazione" name="collocazione" class="form-control" required>
+                                <option value="">Seleziona una collocazione...</option>
+                                <?php foreach ($collocazioni as $coll): ?>
+                                    <option value="<?php echo htmlspecialchars($coll); ?>" <?php echo (isset($user_to_edit['collocazione']) && $user_to_edit['collocazione'] === $coll) ? 'selected' : ''; ?>><?php echo htmlspecialchars($coll); ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="password">Password: <?php echo $action === 'edit' ? '(lascia vuoto per non cambiare)' : ''; ?></label>

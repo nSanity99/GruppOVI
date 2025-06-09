@@ -31,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
         error_log("[Login con ruoli] Errore di connessione al database: " . $conn->connect_error);
         $login_error = "Errore di sistema. Riprova più tardi.";
     } else {
-        $stmt = $conn->prepare("SELECT id, username, password_hash, ruolo, nome FROM utenti WHERE username = ?");
+        $stmt = $conn->prepare("SELECT id, username, password_hash, ruolo, nome, collocazione FROM utenti WHERE username = ?");
         if ($stmt) {
             $stmt->bind_param("s", $username_input);
             if (!$stmt->execute()) {
@@ -39,7 +39,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
             } else {
                 $stmt->store_result();
                 if ($stmt->num_rows > 0) {
-                    $stmt->bind_result($user_id, $db_username, $hashed_password_from_db, $db_ruolo, $db_user_fullname);
+                    $stmt->bind_result($user_id, $db_username, $hashed_password_from_db, $db_ruolo, $db_user_fullname, $db_collocazione);
                     $stmt->fetch();
                     if (password_verify($password_input, $hashed_password_from_db)) {
                         session_regenerate_id(true);
@@ -48,6 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['login'])) {
                         $_SESSION['username'] = $db_username;
                         $_SESSION['ruolo'] = $db_ruolo;
                         $_SESSION['user_fullname'] = $db_user_fullname;
+                        $_SESSION['user_collocazione'] = $db_collocazione;
                         header("Location: dashboard.php");
                         exit;
                     } else {
