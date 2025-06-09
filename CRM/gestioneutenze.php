@@ -1,20 +1,20 @@
 <?php
 session_start();
+require_once 'logger.php';
 
 // --- Blocco Debug e Configurazione Sessione/Log ---
 ini_set('log_errors', 1);
-ini_set('error_log', 'C:/xampp/php_error.log');
 error_reporting(E_ALL);
 
 $timestamp = date("Y-m-d H:i:s");
 $ruolo_admin_atteso = 'admin';
 
 $action_for_log = isset($_GET['action']) ? $_GET['action'] : 'list';
-error_log("--- [{$timestamp}] Accesso a gestioneutenze.php (View: {$action_for_log}) UTENTE: " . (isset($_SESSION['username']) ? $_SESSION['username'] : 'NON LOGGATO') . " ---");
+logUserAction("Accesso a gestione utenze (view: {$action_for_log}) da parte di '" . ($_SESSION['username'] ?? 'NON LOGGATO') . "'");
 
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true || 
     !isset($_SESSION['ruolo']) || $_SESSION['ruolo'] !== $ruolo_admin_atteso) {
-    error_log("--- [{$timestamp}] Accesso NEGATO a gestioneutenze.php (non admin o non loggato) ---");
+    logUserAction("Accesso negato a gestione utenze per utente non autorizzato");
     header("Location: login.php");
     exit;
 }
@@ -34,7 +34,7 @@ $user_id_to_edit = null;
 $user_to_edit = null;
 
 if ($conn_gu->connect_error) {
-    error_log("[gestioneutenze.php] Errore connessione DB: " . $conn_gu->connect_error);
+    logUserAction("Errore di connessione al DB durante la gestione utenze: " . $conn_gu->connect_error);
     $db_error_message = "Impossibile caricare i dati: errore di connessione al database.";
 } else {
     $sql_users = "SELECT id, username, email, nome, ruolo, data_creazione FROM utenti ORDER BY username ASC";
@@ -43,7 +43,7 @@ if ($conn_gu->connect_error) {
         while ($row = $result_users->fetch_assoc()) { $users_list[] = $row; }
         $result_users->free();
     } else {
-        error_log("[gestioneutenze.php] Errore query lista utenti: " . $conn_gu->error);
+        logUserAction("Errore nell'esecuzione della query lista utenti: " . $conn_gu->error);
         $db_error_message = "Errore nel caricamento della lista utenti.";
     }
 
@@ -56,14 +56,14 @@ if ($conn_gu->connect_error) {
             $result_edit = $stmt_edit->get_result();
             $user_to_edit = $result_edit->fetch_assoc();
             if (!$user_to_edit) {
-                error_log("[gestioneutenze.php] Tentativo di modifica utente ID {$user_id_to_edit} non trovato.");
+                logUserAction("Modifica utente fallita: ID {$user_id_to_edit} non trovato");
                 $_SESSION['error_message_usermgmt'] = "Utente da modificare non trovato (ID: ".htmlspecialchars($user_id_to_edit).").";
                  header("Location: gestioneutenze.php?action=list_feedback"); 
                  exit;
             }
             $stmt_edit->close();
         } else {
-             error_log("[gestioneutenze.php] Errore preparazione statement per modifica utente: " . $conn_gu->error);
+             logUserAction("Errore preparazione statement per modifica utente: " . $conn_gu->error);
              $db_error_message = "Errore nel caricamento dati utente per modifica.";
              $action = 'list';
         }

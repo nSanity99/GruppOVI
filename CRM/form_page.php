@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'logger.php';
 
 // Verifica se l'utente è loggato, altrimenti reindirizza alla pagina di login
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
@@ -13,12 +14,15 @@ $richiedente_nome = (!empty($_SESSION['user_fullname'])) ? htmlspecialchars($_SE
 $id_utente_richiedente = $_SESSION['user_id'];
 
 // Opzioni per i dropdown
-$centri_di_costo = [
+$richiedenti = [
     "ABA", "Amm. Riabilitazione", "Amministrazione", "Assistenti Direzione", 
     "Assistenti Sociali", "Call Center", "Cardiologia", "Direttore", "Infermeria", 
     "Logopediste", "Palestra", "Semiconvitto", "TO", "Ufficio Personale", "Ufficio Planning"
 ];
+sort($richiedenti);
+$centri_di_costo = ["Contact Centre Nord", "Contact Centre Sud", "CGM", "Edil Eboli", "Elimar", "Il Tulipano", "Lac San Luca", "La Nona Musa", "San Luca Hotel", "San Pio", "Tenuta Elisa"];
 sort($centri_di_costo);
+
 
 $unita_di_misura = ["Pezzo", "Cartone", "Scatolo"];
 
@@ -42,7 +46,7 @@ if (isset($_GET['status'])) {
 $timestamp = date("Y-m-d H:i:s");
 ini_set('log_errors', 1); 
 ini_set('error_log', 'C:/xampp/php_error.log');
-error_log("--- [{$timestamp}] Accesso a form_page.php UTENTE: " . htmlspecialchars($_SESSION['username']) . " ---");
+logUserAction("Accesso alla pagina richiesta acquisti da parte di '" . ($_SESSION['username'] ?? 'N/A') . "'");
 
 ?>
 <!DOCTYPE html>
@@ -178,10 +182,18 @@ error_log("--- [{$timestamp}] Accesso a form_page.php UTENTE: " . htmlspecialcha
                         <label for="richiedente_display">Richiedente:</label>
                         <input type="text" id="richiedente_display" name="richiedente_display" value="<?php echo $richiedente_nome; ?>" readonly>
                         <input type="hidden" name="id_utente_richiedente" value="<?php echo htmlspecialchars($_SESSION['user_id']); ?>">
-                        <input type="hidden" name="nome_richiedente" value="<?php echo $richiedente_nome; ?>">
                     </div>
                 </div>
                 <div class="form-row">
+                    <div class="form-group" style="flex-grow: 2;">
+                        <label for="nome_richiedente">Richiedente:</label>
+                        <select id="nome_richiedente" name="nome_richiedente" required>
+                            <option value="">Seleziona il richiedente...</option>
+                            <?php foreach ($richiedenti as $rich): ?>
+                                <option value="<?php echo htmlspecialchars($rich); ?>"><?php echo htmlspecialchars($rich); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                     <div class="form-group" style="flex-grow: 2;">
                         <label for="centro_costo">Centro di costo:</label>
                         <select id="centro_costo" name="centro_costo" required>

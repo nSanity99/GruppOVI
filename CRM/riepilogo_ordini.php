@@ -161,7 +161,8 @@ if ($conn_ro->connect_error) {
                         <div class="order-record">
                             <div class="order-summary">
                                 <div>
-                                    <h3>Ordine #<?php echo htmlspecialchars($ordine['id_ordine']); ?> - <?php echo htmlspecialchars($ordine['centro_costo']); ?></h3>
+                                    <h3>Ordine #<?php echo htmlspecialchars($ordine['id_ordine']); ?></h3>
+                                    <span style="font-size:0.9em; color:#555;">Centro di Costo: <?php echo htmlspecialchars($ordine['centro_costo']); ?></span>
                                     <span style="font-size:0.9em; color:#555;">Richiedente: <?php echo htmlspecialchars($ordine['nome_richiedente']); ?></span>
                                 </div>
                                 <div class="order-meta">

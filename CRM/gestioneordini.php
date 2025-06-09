@@ -268,7 +268,8 @@ if ($conn_go->connect_error) {
                         <div class="order-record" id="order-<?php echo $ordine['id_ordine']; ?>">
                             <div class="order-summary" data-order-id="<?php echo $ordine['id_ordine']; ?>">
                                 <div class="order-summary-info">
-                                    <h3>Ordine #<?php echo htmlspecialchars($ordine['id_ordine']); ?> - <?php echo htmlspecialchars($ordine['centro_costo']); ?></h3>
+                                    <h3>Ordine #<?php echo htmlspecialchars($ordine['id_ordine']); ?></h3>
+                                    <span>Centro di Costo: <?php echo htmlspecialchars($ordine['centro_costo']); ?></span>
                                     <span>Richiedente: <?php echo htmlspecialchars($ordine['nome_richiedente']); ?></span>
                                 </div>
                                 <div class="order-meta">

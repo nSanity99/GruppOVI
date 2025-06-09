@@ -138,7 +138,8 @@ if ($conn_eo->connect_error) {
                         <div class="order-record" id="order-record-<?php echo $ordine['id_ordine']; ?>">
                             <div class="order-summary">
                                 <div>
-                                    <h3>Ordine #<?php echo htmlspecialchars($ordine['id_ordine']); ?> - <?php echo htmlspecialchars($ordine['centro_costo']); ?></h3>
+                                    <h3>Ordine #<?php echo htmlspecialchars($ordine['id_ordine']); ?></h3>
+                                    <span class="order-meta">Centro di Costo: <?php echo htmlspecialchars($ordine['centro_costo']); ?></span>
                                     <span class="order-meta">Richiedente: <?php echo htmlspecialchars($ordine['nome_richiedente']); ?></span>
                                 </div>
                             </div>
