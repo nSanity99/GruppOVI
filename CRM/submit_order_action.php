@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'logger.php';
 
 // Dettagli connessione DB (gli stessi usati negli altri file)
 $db_host = 'localhost';
@@ -15,19 +16,19 @@ $timestamp = date("Y-m-d H:i:s");
 
 // Verifica che l'utente sia loggato
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true || !isset($_SESSION['user_id'])) {
-    error_log("--- [{$timestamp}] [submit_order_action.php] Tentativo di invio ordine da utente non loggato o sessione invalida. ---");
+    logUserAction("Tentativo di invio ordine da utente non loggato o con sessione invalida");
     header("Location: login.php?error=session_expired");
     exit;
 }
 
 // Verifica che la richiesta sia POST
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-    error_log("--- [{$timestamp}] [submit_order_action.php] Accesso non POST al file. ---");
+    logUserAction("Accesso non POST a submit_order_action.php da parte di '" . ($_SESSION['username'] ?? 'N/A') . "'");
     header("Location: form_page.php?status=order_error&message=" . urlencode("Metodo di richiesta non valido."));
     exit;
 }
 
-error_log("--- [{$timestamp}] [submit_order_action.php] Ricevuta richiesta POST per invio ordine. Utente ID: {$_SESSION['user_id']} ---");
+logUserAction("Richiesta di invio ordine ricevuta dall'utente ID {$_SESSION['user_id']}");
 
 // Recupero e validazione dati principali del form
 $id_utente_richiedente = filter_var($_POST['id_utente_richiedente'] ?? $_SESSION['user_id'], FILTER_VALIDATE_INT);
@@ -38,13 +39,13 @@ $prodotti = json_decode($prodotti_json, true); // Decodifica in array PHP
 
 // Validazione base
 if (empty($id_utente_richiedente) || empty($nome_richiedente) || empty($centro_costo)) {
-    error_log("[submit_order_action.php] Dati mancanti: id_utente, nome_richiedente o centro_costo.");
+    logUserAction("Invio ordine fallito: dati principali mancanti");
     header("Location: form_page.php?status=order_error&message=" . urlencode("Dati principali mancanti."));
     exit;
 }
 
 if (empty($prodotti) || !is_array($prodotti)) {
-    error_log("[submit_order_action.php] Nessun prodotto inviato o formato JSON prodotti errato.");
+    logUserAction("Invio ordine fallito: nessun prodotto o JSON non valido");
     header("Location: form_page.php?status=order_error&message=" . urlencode("Nessun prodotto specificato nella richiesta."));
     exit;
 }
@@ -56,7 +57,7 @@ $data_richiesta_sql = date('Y-m-d H:i:s');
 // Connessione al database
 $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 if ($conn->connect_error) {
-    error_log("[submit_order_action.php] Errore connessione DB: " . $conn->connect_error);
+    logUserAction("Errore connessione DB durante invio ordine: " . $conn->connect_error);
     header("Location: form_page.php?status=order_error&message=" . urlencode("Errore di connessione al database."));
     exit;
 }
@@ -84,7 +85,7 @@ try {
     if (!$id_ordine_inserito) {
         throw new Exception("Impossibile recuperare l'ID dell'ordine inserito.");
     }
-    error_log("[submit_order_action.php] Ordine #{$id_ordine_inserito} inserito con successo.");
+    logUserAction("Ordine #{$id_ordine_inserito} inserito con successo");
 
     // 2. Inserisci i dettagli dell'ordine (prodotti) nella tabella 'dettagli_ordine'
     $stmt_dettaglio = $conn->prepare("INSERT INTO dettagli_ordine (id_ordine, nome_prodotto, quantita, unita_misura, note_prodotto, stato_prodotto) VALUES (?, ?, ?, ?, ?, ?)");
@@ -107,20 +108,20 @@ try {
         if (!$stmt_dettaglio->execute()) {
             throw new Exception("Errore esecuzione statement dettaglio prodotto: " . $stmt_dettaglio->error . " per prodotto: " . $nome_p);
         }
-        error_log("[submit_order_action.php] Dettaglio prodotto '{$nome_p}' per ordine #{$id_ordine_inserito} inserito.");
+        logUserAction("Inserito dettaglio prodotto '{$nome_p}' per ordine #{$id_ordine_inserito}");
     }
     $stmt_dettaglio->close();
 
     // Se tutto è andato a buon fine, committa la transazione
     $conn->commit();
-    error_log("[submit_order_action.php] Transazione completata con successo per ordine #{$id_ordine_inserito}.");
+    logUserAction("Transazione completata per ordine #{$id_ordine_inserito}");
     header("Location: form_page.php?status=order_success");
     exit;
 
 } catch (Exception $e) {
     // Qualcosa è andato storto, annulla la transazione
     $conn->rollback();
-    error_log("[submit_order_action.php] ERRORE TRANSAZIONE: " . $e->getMessage());
+    logUserAction("Errore transazione in submit_order_action: " . $e->getMessage());
     // Reindirizza con un messaggio di errore più specifico se possibile, o uno generico
     $error_message_url = urlencode("Si è verificato un errore durante il salvataggio dell'ordine: " . $e->getMessage());
     header("Location: form_page.php?status=order_error&message=" . $error_message_url);

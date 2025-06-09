@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'logger.php';
 
 // Verifica se l'utente è loggato, altrimenti reindirizza alla pagina di login
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
@@ -42,7 +43,7 @@ if (isset($_GET['status'])) {
 $timestamp = date("Y-m-d H:i:s");
 ini_set('log_errors', 1); 
 ini_set('error_log', 'C:/xampp/php_error.log');
-error_log("--- [{$timestamp}] Accesso a form_page.php UTENTE: " . htmlspecialchars($_SESSION['username']) . " ---");
+logUserAction("Accesso alla pagina richiesta acquisti da parte di '" . ($_SESSION['username'] ?? 'N/A') . "'");
 
 ?>
 <!DOCTYPE html>
