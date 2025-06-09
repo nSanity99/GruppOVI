@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once "log_helpers.php";
 
 // Dettagli connessione DB (gli stessi usati negli altri file)
 $db_host = 'localhost';
@@ -113,6 +114,7 @@ try {
 
     // Se tutto è andato a buon fine, committa la transazione
     $conn->commit();
+    log_action($_SESSION["user_id"], $_SESSION["username"], "submit_order", "Ordine ID $id_ordine_inserito");
     error_log("[submit_order_action.php] Transazione completata con successo per ordine #{$id_ordine_inserito}.");
     header("Location: form_page.php?status=order_success");
     exit;
