@@ -20,7 +20,7 @@ if ($conn_ro->connect_error) {
     $db_error_message_ro = "Impossibile connettersi al database.";
 } else {
     // 1. TROVA GLI ORDINI CHE CONTENGONO PRODOTTI EVASI
-    $sql_ordini = "SELECT DISTINCT o.id_ordine, o.data_richiesta, o.nome_richiedente, o.centro_costo FROM ordini o JOIN dettagli_ordine do ON o.id_ordine = do.id_ordine WHERE do.stato_prodotto = 'Evaso'";
+    $sql_ordini = "SELECT DISTINCT o.id_ordine, o.data_richiesta, o.nome_richiedente, o.centro_costo, o.fattura_file FROM ordini o JOIN dettagli_ordine do ON o.id_ordine = do.id_ordine WHERE do.stato_prodotto = 'Evaso'";
     $params = [];
     $types = '';
     if (!empty($start_date_filter)) { $sql_ordini .= " AND do.data_evasione >= ?"; $params[] = $start_date_filter . ' 00:00:00'; $types .= 's'; }
@@ -109,6 +109,8 @@ if ($conn_ro->connect_error) {
         .product-detail-item:last-child { border-bottom: none; }
         .product-info .notes { display: block; font-size: 0.9em; color: #6c757d; font-style: italic; }
         .product-meta { text-align: right; font-size: 0.9em; color: #555; }
+        .invoice-section { margin-top: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .invoice-section form { display: inline-block; }
         .footer-logo-area { text-align: center; margin-top: 40px; padding-top: 25px; border-top: 1px solid #e9ecef; }
         .footer-logo-area img { max-width: 60px; opacity: 0.5; }
     </style>
@@ -187,6 +189,27 @@ if ($conn_ro->connect_error) {
                                         </div>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
+
+                                <div class="invoice-section">
+                                    <?php if (!empty($ordine['fattura_file'])): ?>
+                                        <p>Fattura: <a href="fatture/<?php echo rawurlencode($ordine['fattura_file']); ?>" target="_blank" class="nav-link-button">Download</a></p>
+                                        <form class="invoice-form" enctype="multipart/form-data" method="POST" action="upload_fattura_action.php">
+                                            <input type="hidden" name="id_ordine" value="<?php echo $ordine['id_ordine']; ?>">
+                                            <input type="file" name="fattura" accept="application/pdf">
+                                            <button type="submit" class="admin-button secondary small">Aggiorna</button>
+                                        </form>
+                                        <form class="delete-invoice-form" method="POST" action="delete_fattura_action.php" onsubmit="return confirm('Eliminare la fattura?');">
+                                            <input type="hidden" name="id_ordine" value="<?php echo $ordine['id_ordine']; ?>">
+                                            <button type="submit" class="admin-button secondary small">Elimina</button>
+                                        </form>
+                                    <?php else: ?>
+                                        <form class="invoice-form" enctype="multipart/form-data" method="POST" action="upload_fattura_action.php">
+                                            <input type="hidden" name="id_ordine" value="<?php echo $ordine['id_ordine']; ?>">
+                                            <input type="file" name="fattura" accept="application/pdf" required>
+                                            <button type="submit" class="admin-button secondary small">Carica Fattura</button>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -206,6 +229,25 @@ if ($conn_ro->connect_error) {
             summary.addEventListener('click', function() {
                 const orderRecord = this.closest('.order-record');
                 orderRecord.classList.toggle('active');
+            });
+        });
+
+        document.querySelectorAll('.invoice-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const fd = new FormData(form);
+                fetch('upload_fattura_action.php', { method: 'POST', body: fd })
+                    .then(r => r.json()).then(() => location.reload());
+            });
+        });
+
+        document.querySelectorAll('.delete-invoice-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (!confirm('Eliminare la fattura?')) return;
+                const fd = new FormData(form);
+                fetch('delete_fattura_action.php', { method: 'POST', body: fd })
+                    .then(r => r.json()).then(() => location.reload());
             });
         });
     });
