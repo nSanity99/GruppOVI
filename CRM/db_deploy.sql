@@ -115,6 +115,7 @@ CREATE TABLE IF NOT EXISTS `utenti` (
   `username` varchar(50) NOT NULL,
   `email` varchar(100) DEFAULT NULL,
   `nome` varchar(150) DEFAULT NULL,
+  `collocazione` varchar(100) DEFAULT NULL,
   `password_hash` varchar(255) NOT NULL,
   `ruolo` varchar(20) NOT NULL DEFAULT 'user',
   `data_creazione` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -124,9 +125,9 @@ CREATE TABLE IF NOT EXISTS `utenti` (
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 -- Dump dei dati della tabella gruppo_vitolo_db.utenti: ~2 rows (circa)
-INSERT INTO `utenti` (`id`, `username`, `email`, `nome`, `password_hash`, `ruolo`, `data_creazione`) VALUES
-	(1, 'admin', 'admin@gruppovitolo.example.com', 'admin', '$2y$10$9RMP49bT0CRS9I.MXuIa7ek2SHfovBVWezAMjYvXTyz5oq.2EV3NO', 'admin', '2025-06-06 07:36:44'),
-	(2, 'users', '', 'users', '$2y$10$jCb4tU2C6hc99e4gFJUCTePCTwJhtK7BuK1lF046bJrscFDw4ikVi', 'user', '2025-06-06 07:36:44');
+INSERT INTO `utenti` (`id`, `username`, `email`, `nome`, `collocazione`, `password_hash`, `ruolo`, `data_creazione`) VALUES
+        (1, 'admin', 'admin@gruppovitolo.example.com', 'admin', '', '$2y$10$9RMP49bT0CRS9I.MXuIa7ek2SHfovBVWezAMjYvXTyz5oq.2EV3NO', 'admin', '2025-06-06 07:36:44'),
+        (2, 'users', '', 'users', '', '$2y$10$jCb4tU2C6hc99e4gFJUCTePCTwJhtK7BuK1lF046bJrscFDw4ikVi', 'user', '2025-06-06 07:36:44');
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;

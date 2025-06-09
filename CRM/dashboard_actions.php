@@ -24,12 +24,13 @@ if ($form_action === 'edit_user_submit') {
     $username = trim(htmlspecialchars($_POST['username']));
     $email = filter_var(trim($_POST['email']), FILTER_SANITIZE_EMAIL);
     $nome = trim(htmlspecialchars($_POST['nome']));
+    $collocazione = trim(htmlspecialchars($_POST['collocazione']));
     $ruolo = trim(htmlspecialchars($_POST['ruolo']));
     $password = $_POST['password'];
     $redirect_error_url = $_POST['redirect_error'];
     $redirect_success_url = $_POST['redirect_success'];
 
-    if (!$user_id || empty($username) || !in_array($ruolo, ['user', 'admin'])) {
+    if (!$user_id || empty($username) || empty($collocazione) || !in_array($ruolo, ['user', 'admin'])) {
         $_SESSION['error_message_usermgmt'] = "Dati mancanti o non validi.";
         header("Location: " . $redirect_error_url);
         exit;
@@ -37,11 +38,11 @@ if ($form_action === 'edit_user_submit') {
 
     if (!empty($password)) {
         $password_hash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $conn->prepare("UPDATE utenti SET username = ?, email = ?, nome = ?, ruolo = ?, password_hash = ? WHERE id = ?");
-        $stmt->bind_param("sssssi", $username, $email, $nome, $ruolo, $password_hash, $user_id);
+        $stmt = $conn->prepare("UPDATE utenti SET username = ?, email = ?, nome = ?, collocazione = ?, ruolo = ?, password_hash = ? WHERE id = ?");
+        $stmt->bind_param("ssssssi", $username, $email, $nome, $collocazione, $ruolo, $password_hash, $user_id);
     } else {
-        $stmt = $conn->prepare("UPDATE utenti SET username = ?, email = ?, nome = ?, ruolo = ? WHERE id = ?");
-        $stmt->bind_param("ssssi", $username, $email, $nome, $ruolo, $user_id);
+        $stmt = $conn->prepare("UPDATE utenti SET username = ?, email = ?, nome = ?, collocazione = ?, ruolo = ? WHERE id = ?");
+        $stmt->bind_param("sssssi", $username, $email, $nome, $collocazione, $ruolo, $user_id);
     }
     
     if ($stmt->execute()) {
@@ -59,18 +60,19 @@ elseif ($form_action === 'create_user_submit') {
     $username = trim(htmlspecialchars($_POST['username']));
     $email = filter_var(trim($_POST['email']), FILTER_SANITIZE_EMAIL);
     $nome = trim(htmlspecialchars($_POST['nome']));
+    $collocazione = trim(htmlspecialchars($_POST['collocazione']));
     $ruolo = trim(htmlspecialchars($_POST['ruolo']));
     $password = $_POST['password'];
 
-    if (empty($username) || empty($password) || !in_array($ruolo, ['user', 'admin'])) {
+    if (empty($username) || empty($password) || empty($collocazione) || !in_array($ruolo, ['user', 'admin'])) {
         $_SESSION['error_message_usermgmt'] = "Username, password e ruolo sono obbligatori.";
         header("Location: gestioneutenze.php?action=create_user");
         exit;
     }
 
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $conn->prepare("INSERT INTO utenti (username, email, nome, ruolo, password_hash) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssss", $username, $email, $nome, $ruolo, $password_hash);
+    $stmt = $conn->prepare("INSERT INTO utenti (username, email, nome, collocazione, ruolo, password_hash) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssss", $username, $email, $nome, $collocazione, $ruolo, $password_hash);
 
     if ($stmt->execute()) {
         $_SESSION['success_message_usermgmt'] = "Nuovo utente '" . $username . "' creato con successo!";
