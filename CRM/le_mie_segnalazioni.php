@@ -141,22 +141,27 @@ if ($conn->connect_error) {
                 <?php else: ?>
                     <?php foreach ($mie_segnalazioni as $s): ?>
                         <?php
-                        // Calcola notifiche non lette
-                        $unread = 0;
+                        // Determina se mostrare una notifica per questa segnalazione
+                        $has_notif = false;
+
+                        // 1) Ultimo messaggio dell'admin in attesa di risposta
                         if (!empty($chat_messaggi[$s['id_segnalazione']])) {
-                            foreach ($chat_messaggi[$s['id_segnalazione']] as $m) {
-                                if (empty($m['risposta_utente']) && $s['stato'] !== 'Conclusa') {
-                                    $unread++;
-                                }
+                            $last_msg = end($chat_messaggi[$s['id_segnalazione']]);
+                            if (!empty($last_msg['messaggio_admin']) && empty($last_msg['risposta_utente'])) {
+                                $has_notif = true;
                             }
                         }
+
+                        // 2) Cambio stato rispetto all'invio iniziale
+                        $changed = ($s['stato'] !== 'Inviata' && strtotime($s['data_ultima_modifica']) > strtotime($s['data_invio']));
+                        if ($changed) $has_notif = true;
                         ?>
                         <div class="report-record">
                             <div class="report-summary">
                                 <div class="report-summary-info">
                                     <h3><?php echo htmlspecialchars($s['titolo']); ?></h3>
                                     <span>Inviata il: <?php echo date('d/m/Y H:i', strtotime($s['data_invio'])); ?></span>
-                                    <?php if ($unread > 0): ?><span class="new-notif-dot"></span><?php endif; ?>
+                                    <?php if ($has_notif): ?><span class="new-notif-dot"></span><?php endif; ?>
                                 </div>
                                 <div class="report-meta"><span class="status-badge <?php echo strtolower(str_replace(' ', '-', $s['stato'])); ?>"><?php echo htmlspecialchars($s['stato']); ?></span></div>
                             </div>
