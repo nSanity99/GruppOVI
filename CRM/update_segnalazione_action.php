@@ -1,6 +1,7 @@
 <?php
 session_start();
 ini_set('display_errors', 1);
+require_once "log_helpers.php";
 error_reporting(E_ALL);
 require_once 'db_config.php';
 
@@ -59,6 +60,7 @@ try {
     }
 
     $conn->commit();
+    log_action($_SESSION["user_id"], $_SESSION["username"], "update_segnalazione", "Segnalazione $id_segnalazione -> $nuovo_stato");
     echo json_encode(['success' => true, 'message' => 'Segnalazione aggiornata correttamente.']);
 } catch (Exception $e) {
     $conn->rollback();

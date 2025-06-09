@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'db_config.php';
+require_once "log_helpers.php";
 
 // Sicurezza e validazione
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
@@ -44,6 +45,7 @@ if ($stmt) {
     $stmt->bind_param("issss", $id_utente, $nome_utente, $titolo, $area_competenza, $descrizione);
     if ($stmt->execute()) {
         // Successo
+        log_action($id_utente, $nome_utente, "submit_segnalazione", "Nuova segnalazione ID " . $conn->insert_id);
         header("Location: segnalazioni_form.php?status=success");
     } else {
         // Errore

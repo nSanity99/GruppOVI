@@ -81,6 +81,7 @@ if ($conn->connect_error) {
         .report-summary { display: grid; grid-template-columns: 1fr auto; align-items: center; padding: 15px 20px; cursor: pointer; gap: 20px; }
         .report-summary-info h3 { margin: 0 0 5px 0; color: #343a40; font-size: 1.1em; }
         .report-summary-info span { font-size: 0.9em; color: #6c757d; }
+        .new-notif-dot { width: 8px; height: 8px; background-color: #dc3545; border-radius: 50%; display: inline-block; margin-left: 6px; }
         .report-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
         .report-details { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out, padding 0.4s ease-out; background-color: #fdfdfd; border-top: 1px solid #e9ecef; padding: 0 25px; }
         .report-record.is-open .report-details { max-height: 1500px; padding: 25px; }
@@ -136,11 +137,22 @@ if ($conn->connect_error) {
                     <p style="text-align:center; padding: 30px; color: #6c757d; font-style: italic;">Nessuna segnalazione presente.</p>
                 <?php else: ?>
                     <?php foreach ($segnalazioni as $s): ?>
+                        <?php
+                            // Verifica se sono presenti nuove risposte dell'utente o se la segnalazione è appena stata inviata
+                            $needs_action = ($s['stato'] === 'Inviata');
+                            if (!empty($chat_messaggi[$s['id_segnalazione']])) {
+                                $last_msg = end($chat_messaggi[$s['id_segnalazione']]);
+                                if (!empty($last_msg['risposta_utente'])) {
+                                    $needs_action = true;
+                                }
+                            }
+                        ?>
                         <div class="report-record" id="report-record-<?php echo $s['id_segnalazione']; ?>">
                             <div class="report-summary">
                                 <div class="report-summary-info">
                                     <h3><?php echo htmlspecialchars($s['titolo']); ?></h3>
                                     <span>Inviata da: <strong><?php echo htmlspecialchars($s['nome_utente_segnalante']); ?></strong> il <?php echo date('d/m/Y H:i', strtotime($s['data_invio'])); ?></span>
+                                    <?php if ($needs_action): ?><span class="new-notif-dot"></span><?php endif; ?>
                                 </div>
                                 <div class="report-meta">
                                     <?php $status_class = strtolower(str_replace(' ', '-', $s['stato'])); ?>
