@@ -17,6 +17,7 @@ $user_role_display = htmlspecialchars($_SESSION['ruolo'] ?? 'N/A');
 // --- Logica Database per recuperare gli ordini di QUESTO utente ---
 $conn = new mysqli($db_host, $db_user, $db_pass, $db_name, $db_port ?? 3306);
 $ordini_utente = [];
+$chat_messaggi = [];
 $db_error_message = null;
 
 if ($conn->connect_error) {
@@ -52,6 +53,24 @@ if ($conn->connect_error) {
         $ordini_utente[] = $ordine_row;
     }
     $stmt_ordini->close();
+
+    if (!empty($ordini_utente)) {
+        $ids = array_column($ordini_utente, 'id_ordine');
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $types = str_repeat('i', count($ids));
+        $sql_chat = "SELECT id, id_ordine, messaggio_admin, risposta_utente, data_messaggio, data_risposta FROM ordini_chat WHERE id_ordine IN ($placeholders) ORDER BY data_messaggio ASC";
+        $stmt_chat = $conn->prepare($sql_chat);
+        $stmt_chat->bind_param($types, ...$ids);
+        $stmt_chat->execute();
+        $res_chat = $stmt_chat->get_result();
+        if ($res_chat) {
+            while ($row = $res_chat->fetch_assoc()) {
+                $chat_messaggi[$row['id_ordine']][] = $row;
+            }
+            $res_chat->free();
+        }
+        $stmt_chat->close();
+    }
     $conn->close();
 }
 ?>
@@ -104,6 +123,16 @@ if ($conn->connect_error) {
         .status-prodotto.Rifiutato { color: #dc3545; }
         .status-prodotto.Inviato { color: #007bff; }
         .status-prodotto.Evaso { color: #6c757d; }
+
+        /* Stili chat */
+        .chat-messages { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; padding-right: 10px; }
+        .chat-message { display: flex; }
+        .chat-message.admin { justify-content: flex-start; }
+        .chat-message.user { justify-content: flex-end; }
+        .bubble { max-width: 75%; padding: 10px 14px; border-radius: 12px; font-size: 0.95em; line-height: 1.4; border: 1px solid transparent; }
+        .chat-message.admin .bubble { background-color: #e9f5ff; border-color: #c3ddf2; border-top-left-radius: 0; color: #034a73; }
+        .chat-message.user .bubble { background-color: #f0fdf4; border-color: #cde7d8; border-top-right-radius: 0; color: #1b4332; }
+        .bubble time { display: block; font-size: 0.75em; color: #6c757d; margin-top: 6px; text-align: right; }
     </style>
 </head>
 <body>
@@ -169,6 +198,35 @@ if ($conn->connect_error) {
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <p>Nessun prodotto trovato per questo ordine.</p>
+                                <?php endif; ?>
+
+                                <?php if (!empty($chat_messaggi[$ordine['id_ordine']])): ?>
+                                    <div class="chat-messages">
+                                        <?php foreach ($chat_messaggi[$ordine['id_ordine']] as $msg): ?>
+                                            <div class="chat-message admin">
+                                                <div class="bubble">
+                                                    <p><?php echo nl2br(htmlspecialchars($msg['messaggio_admin'])); ?></p>
+                                                    <time><?php echo date('d/m H:i', strtotime($msg['data_messaggio'])); ?></time>
+                                                </div>
+                                            </div>
+                                            <?php if (empty($msg['risposta_utente']) && $ordine['stato_ordine'] !== 'Evaso'): ?>
+                                                <div class="chat-message user">
+                                                    <form class="bubble reply-form" action="reply_order_chat_action.php" method="POST">
+                                                        <input type="hidden" name="id_messaggio" value="<?php echo $msg['id']; ?>">
+                                                        <textarea name="risposta_utente" placeholder="La tua risposta..." required></textarea>
+                                                        <button type="submit" class="nav-link-button">Invia</button>
+                                                    </form>
+                                                </div>
+                                            <?php elseif (!empty($msg['risposta_utente'])): ?>
+                                                <div class="chat-message user">
+                                                    <div class="bubble">
+                                                        <p><?php echo nl2br(htmlspecialchars($msg['risposta_utente'])); ?></p>
+                                                        <time><?php echo date('d/m H:i', strtotime($msg['data_risposta'])); ?></time>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                         </div>

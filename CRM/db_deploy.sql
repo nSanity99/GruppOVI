@@ -99,15 +99,31 @@ CREATE TABLE IF NOT EXISTS `segnalazioni_chat` (
 
 -- Dump dei dati della tabella gruppo_vitolo_db.segnalazioni_chat: ~9 rows (circa)
 INSERT INTO `segnalazioni_chat` (`id`, `id_segnalazione`, `id_utente`, `messaggio_admin`, `risposta_utente`, `data_messaggio`, `data_risposta`) VALUES
-	(1, 3, 1, 'aaa', 'che?', '2025-06-07 21:56:19', '2025-06-07 21:56:29'),
-	(2, 3, 1, 'aaaaaa', 'hai finito?', '2025-06-07 21:56:42', '2025-06-07 21:56:52'),
-	(3, 3, 1, 'non ho parole', '111', '2025-06-07 22:05:57', '2025-06-07 22:08:52'),
-	(4, 3, 1, 'VabbÃ¨ te lo chiudo', ',', '2025-06-07 22:09:23', '2025-06-07 22:10:06'),
-	(5, 4, 1, 'Ciao,\r\nSpecificami il problema nel dettaglio.\r\nGrazie', 'Non si accende, ho controllato anche i cavi.. non so cosa dirti', '2025-06-07 22:11:37', '2025-06-07 22:12:13'),
-	(6, 4, 1, 'Contattato Ufficio IT, in attesa di intervento. Al termine rispondi qui', 'Risolto grazie', '2025-06-07 22:12:34', '2025-06-07 22:12:48'),
-	(7, 4, 1, 'aaa', NULL, '2025-06-07 22:15:33', NULL),
-	(8, 4, 1, 'aaaad2231', NULL, '2025-06-07 22:16:57', NULL),
-	(9, 4, 1, 'adsdasd', NULL, '2025-06-07 22:24:37', NULL);
+        (1, 3, 1, 'aaa', 'che?', '2025-06-07 21:56:19', '2025-06-07 21:56:29'),
+        (2, 3, 1, 'aaaaaa', 'hai finito?', '2025-06-07 21:56:42', '2025-06-07 21:56:52'),
+        (3, 3, 1, 'non ho parole', '111', '2025-06-07 22:05:57', '2025-06-07 22:08:52'),
+        (4, 3, 1, 'VabbÃ¨ te lo chiudo', ',', '2025-06-07 22:09:23', '2025-06-07 22:10:06'),
+        (5, 4, 1, 'Ciao,\r\nSpecificami il problema nel dettaglio.\r\nGrazie', 'Non si accende, ho controllato anche i cavi.. non so cosa dirti', '2025-06-07 22:11:37', '2025-06-07 22:12:13'),
+        (6, 4, 1, 'Contattato Ufficio IT, in attesa di intervento. Al termine rispondi qui', 'Risolto grazie', '2025-06-07 22:12:34', '2025-06-07 22:12:48'),
+        (7, 4, 1, 'aaa', NULL, '2025-06-07 22:15:33', NULL),
+        (8, 4, 1, 'aaaad2231', NULL, '2025-06-07 22:16:57', NULL),
+        (9, 4, 1, 'adsdasd', NULL, '2025-06-07 22:24:37', NULL);
+
+-- Dump della struttura di tabella gruppo_vitolo_db.ordini_chat
+CREATE TABLE IF NOT EXISTS `ordini_chat` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_ordine` int(11) NOT NULL,
+  `id_utente` int(11) NOT NULL,
+  `messaggio_admin` text DEFAULT NULL,
+  `risposta_utente` text DEFAULT NULL,
+  `data_messaggio` timestamp NOT NULL DEFAULT current_timestamp(),
+  `data_risposta` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `id_ordine` (`id_ordine`),
+  KEY `id_utente` (`id_utente`),
+  CONSTRAINT `ordini_chat_ibfk_1` FOREIGN KEY (`id_ordine`) REFERENCES `ordini` (`id_ordine`) ON DELETE CASCADE,
+  CONSTRAINT `ordini_chat_ibfk_2` FOREIGN KEY (`id_utente`) REFERENCES `utenti` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dump della struttura di tabella gruppo_vitolo_db.utenti
 CREATE TABLE IF NOT EXISTS `utenti` (
